@@ -5,13 +5,16 @@ import Box from './Box';
 import "./style.css";
 
 const styles = {
+  coronaApp :{
+    background: "linear-gradient(135deg, rgba(179, 229, 252, 1) 0%, rgba(179, 229, 252, 1) 50%, rgba(240, 98, 146, 1) 50%, rgba(240, 98, 146, 1) 100%)",
+  },
   informationContainer: {
     display: "flex",
     width: "100vw",
     height: "80px",
     overflow: "hidden",
     padding: "0.5em",
-    backgroundColor: "#9423a8"
+    backgroundColor: "#b5bbbf",
   },
   dropDownSide: {
     display: "flex",
@@ -47,27 +50,26 @@ class App extends React.Component {
       deaths: null,
       countries: [],
       country: null,
-      boxes : [{}],
+      flag: null,
+      boxes: []
     }  
     this.getCountryData = this.getCountryData.bind(this);
     this.addBox = this.addBox.bind(this);
   }
   componentDidMount() {
-    this.getData()
+    this.getData();
+    this.getCountryList();
   }
 
   async getData() {
     try {   
-      const resApi = await Axios.get('https://covid19.mathdro.id/api');
-      const resCountries = await Axios.get("https://covid19.mathdro.id/api/countries");
-      //let countries = Object.keys(resCountries.data.countries);
-      let countries = Object.values(resCountries.data.countries);    
+      const res = await Axios.get('https://covid19.mathdro.id/api');
       this.setState({
-        confirmed: resApi.data.confirmed.value,
-        recovered: resApi.data.recovered.value,
-        deaths: resApi.data.deaths.value,
-        countries,
-        country: "WorldWide"
+        confirmed: res.data.confirmed.value,
+        recovered: res.data.recovered.value,
+        deaths: res.data.deaths.value,
+        country: "WorldWide",
+        updated: res.data.lastUpdate
       });
     } catch(err) {
       if(err.response === 404) {
@@ -80,17 +82,32 @@ class App extends React.Component {
     }
   }
 
+  async getCountryList() {
+    try{
+      const res = await Axios.get("https://covid19.mathdro.id/api/countries");
+      let countries = Object.values(res.data.countries);      
+      this.setState({
+        countries
+      })
+    } catch(err) {
+      throw err;
+    }
+  } 
+
   async getCountryData(evt) {
     if (evt.target.value === "WorldWide"){
       return this.getData();
     }
     let country = evt.target.value;
+          
+    const countryFlag = this.state.countries.find(name => name.name === country) 
     const res = await Axios.get(`https://covid19.mathdro.id/api/countries/${country}`)
     this.setState({
       confirmed: res.data.confirmed.value,
       recovered: res.data.recovered.value,
       deaths: res.data.deaths.value,
-      country: country
+      country: country,
+      flag: countryFlag.iso2
     })
   }
 
@@ -99,14 +116,15 @@ class App extends React.Component {
     const dd = String(today.getDate()).padStart(2, '0');
     const mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
     const yyyy = today.getFullYear();
-
     today = mm + '/' + dd + '/' + yyyy;
+
     const newBox = {
       confirmed: this.state.confirmed,
       recovered: this.state.recovered,
       deaths: this.state.deaths,
       country: this.state.country,
-      date: today
+      date: today,
+      flag: this.state.flag
     }
     this.setState(state => ({
       boxes: [...state.boxes, newBox]
@@ -122,7 +140,7 @@ class App extends React.Component {
       <div className={classes.CoronaApp}>
         <div className={classes.informationContainer}>
           <div className={classes.dropDownSide}>
-            <h1>Corona Update</h1>
+            <h1>Corona Update: {this.state.lastUpdate}</h1>
             <div>
               <select className={classes.dropDown} onChange={this.getCountryData}>
                 <option>WorldWide</option>
@@ -146,7 +164,18 @@ class App extends React.Component {
             </div>
           </div>
         </div>
-        <Box {...this.state}/>        
+        <Box {...this.state}/> 
+
+        {this.state.boxes && this.state.boxes.map(box => (
+          <Box 
+            confirmed={box.confirmed}
+            recovered={box.recovered}
+            deaths={box.deaths} 
+            country={box.country}
+            date={box.today}
+            flag={box.flag}
+          />
+        ))}       
       </div>
     )
   }
