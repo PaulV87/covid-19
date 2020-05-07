@@ -2,6 +2,10 @@ import React from 'react';
 import Axios from 'axios';
 import { withStyles } from '@material-ui/styles';
 import Box from './Box';
+import Chart from './Charts/Chart';
+//  import CountrySelector from './CountrySelector';
+import { NativeSelect, FormControl} from '@material-ui/core';
+// CSS reset
 import "./style.css";
 
 const styles = {
@@ -11,8 +15,7 @@ const styles = {
   informationContainer: {
     display: "flex",
     width: "100vw",
-    height: "80px",
-    overflow: "hidden",
+    height: "100px",
     padding: "0.5em",
     backgroundColor: "#b5bbbf",
   },
@@ -61,6 +64,10 @@ class App extends React.Component {
     this.getCountryList();
   }
 
+  handleCountryChange = async (country) => {
+    // const fetchData = await this.getCountryData(country);
+  }
+
   async getData() {
     try {   
       const res = await Axios.get('https://covid19.mathdro.id/api');
@@ -72,13 +79,7 @@ class App extends React.Component {
         updated: res.data.lastUpdate
       });
     } catch(err) {
-      if(err.response === 404) {
-        this.setState({
-          confirmed: 'No data available',
-          recovered: 'No data available',
-          deaths: 'No data available'
-        })
-      }
+      console.log(err)
     }
   }
 
@@ -109,7 +110,7 @@ class App extends React.Component {
       country: country,
       flag: countryFlag.iso2
     })
-  }
+  } 
 
   addBox(){
     let today = new Date();
@@ -141,13 +142,13 @@ class App extends React.Component {
         <div className={classes.informationContainer}>
           <div className={classes.dropDownSide}>
             <h1>Corona Update: {this.state.lastUpdate}</h1>
-            <div>
-              <select className={classes.dropDown} onChange={this.getCountryData}>
+            <FormControl>
+              <NativeSelect className={classes.dropDown} onChange={this.getCountryData}>
                 <option>WorldWide</option>
                 {countryOptions}
-              </select>
+              </NativeSelect>
               <button onClick={this.addBox}>Add Box</button>   
-            </div>
+            </FormControl>
           </div>
           <div className={classes.boxContainer}>     
             <div className={classes.box}>
@@ -165,7 +166,7 @@ class App extends React.Component {
           </div>
         </div>
         <Box {...this.state}/> 
-
+        <Chart {...this.state} />
         {this.state.boxes && this.state.boxes.map(box => (
           <Box 
             confirmed={box.confirmed}
