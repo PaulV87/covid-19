@@ -1,9 +1,9 @@
 import React, { useState, useEffect} from 'react';
-import Axios from 'axios';
 import { Line, Bar } from 'react-chartjs-2';
-import { withStyles } from '@material-ui/styles';
+import { makeStyles } from '@material-ui/core/styles';
+import { getChartData } from '../api/api';
 
-const styles = {
+const useStyles =  makeStyles({
   container: {
     display: "flex",
     justifyContent: "center",
@@ -11,32 +11,17 @@ const styles = {
     width: "75vw",
     margin: "auto",
   }
-}
-const getChartData = async () => {
-  try {
-    const { data } = await Axios.get("https://covid19.mathdro.id/api/daily");
-  
-    const modifiedData = data.map((dailyData) => ({
-      confirmed: dailyData.confirmed.total,
-      deaths : dailyData.deaths.total,
-      date: dailyData.reportDate
-    }))
-
-    return modifiedData;
-    
-  } catch(err){
-
-  }
-}
+})
 
 function Chart(props) {
   const [dailyData, setDailyData] = useState([]);
-  const { classes, country, confirmed, deaths, recovered } = props;
+  const { country, data: { confirmed, deaths, recovered }} = props;
+  const classes = useStyles();
   useEffect(() => {
     const fetchApi = async () => {
       setDailyData(await getChartData());
     }
-
+  
     fetchApi();
   }, []);
 
@@ -48,14 +33,14 @@ function Chart(props) {
         labels: dailyData.map(( {date} ) => date),
         datasets: [{
           data: dailyData.map(( {confirmed} ) => confirmed),
-          label: "Infected",
-          borderColor: "#3333ff",
+          label: "Confirmed",
+          borderColor: "#76ced7",
           fill: true,
         }, {
           data: dailyData.map(( {deaths} ) => deaths),
           label: "Deaths",
-          borderColor: "red",
-          backgroundColor: "rgba(255, 0, 0, 0.5)",
+          borderColor: "#f67172",
+          backgroundColor: "#fecbbf",
           fill: true,
         }]
       }}
@@ -69,10 +54,10 @@ function Chart(props) {
     ? (
       <Bar 
         data={{
-          labels: ['Infected', 'Recovered', 'Deaths'],
+          labels: ['Confirmed', 'Recovered', 'Deaths'],
           datasets: [{
             label: 'People',
-            backgroundColor: ["blue", "green", "red"],
+            backgroundColor: ["#ade4ea", "#9ecb87", "#fecbbf"],
             data: [confirmed, recovered,  deaths ]
           }]
         }}
@@ -86,11 +71,11 @@ function Chart(props) {
   )
   return (
     <div className={classes.container}>
-      {country ==="WorldWide" ? lineChart : barChart}
+      {country === "Global" ? lineChart : barChart}
     </div>
   )
 }
 
 
 
-export default withStyles(styles)(Chart);
+export default Chart;
